@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: owncloud
+  labels:
+    app: owncloud
+spec:
+  containers:
+    - name: owncloud
+      image: nigelpoulton/k8sbook:edge
+      ports:
+        - containerPort: 8080
+      volumeMounts:
+        - mountPath: "/mnt/data/files"
+          name: pvc-example
+  volumes:
+    - name: pvc-example
+      persistentVolumeClaim:
+        claimName: pvc

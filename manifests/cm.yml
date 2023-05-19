@@ -1,0 +1,42 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: gcloud-cm
+  namespace: dev
+
+data:
+  hosturl: v1.prod.gcloud.dev
+  test.conf: |
+    env: production
+    endpoint: 0.0.0.0:33001
+    char: utf8
+    log-size: 512M
+    vault: PLEX/test
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-pod
+spec:
+  volumes:
+    - name: cmvol
+      configMap:
+        name: gcloud-cm
+  containers:
+    - name: cm-pod
+      image: busybox
+
+      ports:
+        - containerPort: 8080
+      env:
+        - name: hosturl
+          valueFrom:
+            configMapKeyRef:
+              name: gcloud-cm
+              key: hosturl
+      command:
+        ["/bin/sh", "-c", "sleep 100000 && echo production url: $(hosturl)"]
+      volumeMounts:
+        - name: cmvol
+          mountPath: /etc/config

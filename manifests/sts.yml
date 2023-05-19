@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gcloud-sts-svc
+  labels:
+    app: gcloud-sts
+
+spec:
+  clusterIP: None
+  selector:
+    app: gcloud-sts
+  ports:
+    - name: gcloud-svc
+      port: 80
+      protocol: TCP
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: gcloud-sts
+  labels:
+    app: gcloud-sts
+
+spec:
+  selector:
+    matchLabels:
+      app: gcloud-sts
+  replicas: 0
+  serviceName: gcloud-sts-svc
+  template:
+    metadata:
+      labels:
+        app: gcloud-sts
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: gcloud-ctr
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: webroot
+              mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+    - metadata:
+        name: webroot
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: linode-block-storage-retain
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jump-pod
+  labels:
+    app: jump-pod
+spec:
+  containers:
+    - name: jump-ctr
+      image: nigelpoulton/curl:1.0
+      tty: true
+      stdin: true

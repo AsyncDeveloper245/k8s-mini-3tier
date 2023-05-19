@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-server
+  labels:
+    microservice: db
+    app: mongo
+  namespace: dev
+
+spec:
+  selector:
+    matchLabels:
+      microservice: db
+      app: mongo
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        microservice: db
+        app: mongo
+    spec:
+      containers:
+        - name: db-ctr
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apiserver
+  labels:
+    microservice: api
+    app: flask
+  namespace: dev
+
+spec:
+  selector:
+    matchLabels:
+      microservice: api
+      app: flask
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        microservice: api
+        app: flask
+    spec:
+      containers:
+        - name: api-ctr
+          image: asyncdeveloper/micro-backend:test
+          ports:
+            - containerPort: 5000
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webserver
+  labels:
+    microservice: web
+    app: react
+  namespace: dev
+
+spec:
+  selector:
+    matchLabels:
+      microservice: web
+      app: react
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        microservice: web
+        app: react
+    spec:
+      containers:
+        - name: web-ctr
+          image: asyncdeveloper/micro-frontend:test
+          ports:
+            - containerPort: 3000
+          imagePullPolicy: Always
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jump-server
+  labels:
+    microservice: jump-app
+    app: nginx
+  namespace: dev
+
+spec:
+  selector:
+    matchLabels:
+      microservice: jump-app
+      app: nginx
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        microservice: jump-app
+        app: nginx
+    spec:
+      containers:
+        - name: nginx-ctr
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /etc/nginx/conf.d
+              name: nginx-config
+              readOnly: true
+          command: ["/bin/bash", "-c", "nginx -g 'daemon off;'"]
+          #command: ["/bin/sh", "-c", "sleep 100000"]
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
